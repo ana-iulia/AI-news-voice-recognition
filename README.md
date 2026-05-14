@@ -2,6 +2,25 @@
 
 A Python application that fetches news articles and provides voice recognition and text-to-speech capabilities. Access news through CLI with voice commands or via a phone-friendly web interface with audio playback.
 
+## 🌐 Quick Access - Browser-Based Q&A
+
+**NEW!** Browser-based interface (no Python installation needed):
+
+### 📱 Access Online (After Deployment)
+**Live URL**: https://ana-iulia.github.io/AI-news-voice-recognition/
+
+### 💻 Access Locally
+Open `index.html` in any modern browser - works immediately!
+
+```bash
+# Just open the file
+open index.html              # macOS
+start index.html             # Windows
+xdg-open index.html          # Linux
+```
+
+**See [USAGE.md](USAGE.md) for complete usage instructions.**
+
 ## Features
 
 ✨ **Voice Recognition** - Search for news using your voice (no API key required)
@@ -10,6 +29,7 @@ A Python application that fetches news articles and provides voice recognition a
 💻 **CLI Mode** - Command-line interface with interactive voice mode
 🔒 **Privacy-First** - All free libraries, no API keys required
 🌐 **Offline Support** - Falls back to offline samples when network unavailable
+🎯 **Browser Q&A** - Ask questions about fetched news articles (NEW!)
 
 ## Installation
 
