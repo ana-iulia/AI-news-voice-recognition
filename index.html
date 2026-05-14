@@ -146,6 +146,100 @@
       color: #555;
       line-height: 1.5;
     }
+    .voice-btn {
+      background: #e53e3e;
+      position: relative;
+      min-width: 60px;
+    }
+    .voice-btn:hover {
+      background: #c53030;
+    }
+    .voice-btn.recording {
+      background: #e53e3e;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .voice-btn.recording::after {
+      content: "🎤 Listening...";
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #e53e3e;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(229, 62, 62, 0.7);
+      }
+      50% {
+        box-shadow: 0 0 0 10px rgba(229, 62, 62, 0);
+      }
+    }
+    .voice-mode-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #f7fafc;
+      border-radius: 6px;
+    }
+    .voice-mode-toggle label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      margin: 0;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #667eea;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    .status-indicator {
+      font-size: 12px;
+      color: #666;
+      font-style: italic;
+      margin-top: 5px;
+    }
     @media (max-width: 600px) {
       .container {
         padding: 20px;
@@ -190,13 +284,22 @@
 
     <div class="section">
       <div class="section-title">Your Question</div>
+      <div class="voice-mode-toggle">
+        <label class="switch">
+          <input type="checkbox" id="voice-mode-toggle">
+          <span class="slider"></span>
+        </label>
+        <label for="voice-mode-toggle">🎤 Voice Mode (Auto-speak answers)</label>
+      </div>
       <div class="input-group">
         <input type="text" id="question" placeholder="e.g., how many articles?" />
       </div>
       <div class="button-group">
+        <button id="voice-btn" class="voice-btn" disabled title="Click to ask via voice">🎤 Voice</button>
         <button id="submit-btn" class="button-secondary" disabled>Submit</button>
         <button id="next-btn" disabled>Next</button>
       </div>
+      <div id="voice-status" class="status-indicator"></div>
     </div>
 
     <div class="section">
@@ -243,15 +346,104 @@
       const submitBtn = document.getElementById("submit-btn");
       const nextBtn = document.getElementById("next-btn");
       const answerEl = document.getElementById("answer");
+      const voiceBtn = document.getElementById("voice-btn");
+      const voiceModeToggle = document.getElementById("voice-mode-toggle");
+      const voiceStatus = document.getElementById("voice-status");
 
       const state = {
         articles: [],
         articleTexts: [],
         turn: 0,
-        rounds: 3
+        rounds: 3,
+        voiceMode: false,
+        recognition: null,
+        isRecording: false
       };
 
       topicInput.value = DEFAULT_TOPIC;
+
+      // Initialize Speech Recognition
+      function initSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          voiceStatus.textContent = "⚠️ Speech recognition not supported in this browser";
+          voiceBtn.disabled = true;
+          return null;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+          state.isRecording = true;
+          voiceBtn.classList.add('recording');
+          voiceStatus.textContent = "🎤 Listening... Speak your question";
+        };
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          questionInput.value = transcript;
+          voiceStatus.textContent = `✓ Heard: "${transcript}"`;
+          // Automatically submit the question
+          setTimeout(() => {
+            if (state.articles.length && state.turn < state.rounds) {
+              submitBtn.click();
+            }
+          }, 500);
+        };
+
+        recognition.onerror = (event) => {
+          state.isRecording = false;
+          voiceBtn.classList.remove('recording');
+          if (event.error === 'no-speech') {
+            voiceStatus.textContent = "⚠️ No speech detected. Try again.";
+          } else if (event.error === 'not-allowed') {
+            voiceStatus.textContent = "⚠️ Microphone access denied. Please enable it.";
+          } else {
+            voiceStatus.textContent = `⚠️ Error: ${event.error}`;
+          }
+        };
+
+        recognition.onend = () => {
+          state.isRecording = false;
+          voiceBtn.classList.remove('recording');
+          if (!questionInput.value) {
+            voiceStatus.textContent = "";
+          }
+        };
+
+        return recognition;
+      }
+
+      // Text-to-Speech function for answers
+      function speakAnswer(text) {
+        if (!state.voiceMode || !('speechSynthesis' in window)) return;
+        
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        // Choose a voice (prefer female voice if available)
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(voice => 
+          voice.lang.startsWith('en') && voice.name.includes('Female')
+        ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
+        
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+        
+        window.speechSynthesis.speak(utterance);
+      }
+
+      // Initialize speech recognition on page load
+      state.recognition = initSpeechRecognition();
 
       function normalizeLimit(value) {
         const parsed = Number(value);
@@ -355,6 +547,8 @@
         submitBtn.disabled = false;
         nextBtn.disabled = false;
         readBtn.disabled = state.articleTexts.length === 0;
+        voiceBtn.disabled = !state.recognition || state.articleTexts.length === 0;
+        voiceStatus.textContent = "";
       }
 
       startBtn.addEventListener("click", async () => {
@@ -378,25 +572,33 @@
       submitBtn.addEventListener("click", () => {
         if (!state.articles.length) {
           answerEl.textContent = "Start a session first.";
+          speakAnswer("Start a session first.");
           return;
         }
         const question = questionInput.value.trim();
         if (!question) {
           answerEl.textContent = "Please type a question first.";
+          speakAnswer("Please type a question first.");
           return;
         }
         if (state.turn >= state.rounds) {
           answerEl.textContent = "Session is complete.";
           submitBtn.disabled = true;
+          voiceBtn.disabled = true;
           promptEl.textContent = "Session completed.";
+          speakAnswer("Session is complete.");
           return;
         }
-        answerEl.textContent = answerQuestion(question);
+        const answer = answerQuestion(question);
+        answerEl.textContent = answer;
+        speakAnswer(answer); // Speak the answer in voice mode
         state.turn += 1;
         promptEl.textContent = nextPrompt();
         if (state.turn >= state.rounds) {
           submitBtn.disabled = true;
+          voiceBtn.disabled = true;
         }
+        voiceStatus.textContent = ""; // Clear voice status after submission
       });
 
       nextBtn.addEventListener("click", () => {
@@ -422,6 +624,56 @@
           window.speechSynthesis.speak(utterance);
         }
       });
+
+      // Voice button click handler
+      voiceBtn.addEventListener("click", () => {
+        if (!state.recognition) {
+          voiceStatus.textContent = "⚠️ Speech recognition not available";
+          return;
+        }
+        if (state.isRecording) {
+          state.recognition.stop();
+          voiceStatus.textContent = "🛑 Stopped listening";
+          return;
+        }
+        if (!state.articles.length) {
+          answerEl.textContent = "Start a session first.";
+          return;
+        }
+        if (state.turn >= state.rounds) {
+          answerEl.textContent = "Session is complete. Start a new session.";
+          return;
+        }
+        // Start recording
+        try {
+          state.recognition.start();
+        } catch (error) {
+          voiceStatus.textContent = "⚠️ Error starting voice recognition";
+          console.error("Speech recognition error:", error);
+        }
+      });
+
+      // Voice mode toggle handler
+      voiceModeToggle.addEventListener("change", (e) => {
+        state.voiceMode = e.target.checked;
+        if (state.voiceMode) {
+          voiceStatus.textContent = "✓ Voice mode enabled - answers will be spoken";
+          // Load voices if not already loaded
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+          }
+        } else {
+          voiceStatus.textContent = "";
+          window.speechSynthesis.cancel();
+        }
+      });
+
+      // Load voices when they become available
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          window.speechSynthesis.getVoices();
+        };
+      }
     })();
   </script>
 </body>
