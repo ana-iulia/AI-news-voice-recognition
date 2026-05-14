@@ -84,7 +84,34 @@ The fetched articles will display in a numbered list showing:
 
 ### Step 3: Ask Questions (3 Questions per Session)
 
-You can ask questions about the fetched articles. The system supports:
+You can ask questions about the fetched articles **using text OR voice**. The system supports:
+
+#### 🎤 NEW: Voice Interaction Mode
+
+**Enable Voice Mode** for a hands-free, conversational experience:
+
+1. **Toggle Voice Mode ON** (switch at top of question section)
+   - When enabled, answers will be automatically spoken aloud
+   - Works just like talking to Copilot!
+
+2. **Click the 🎤 Voice Button** to ask questions with your voice
+   - The button will pulse red while listening
+   - Speak your question clearly
+   - Your question is automatically transcribed and submitted
+   - The answer is spoken back to you (if voice mode is on)
+
+3. **Grant Microphone Permission** when prompted by your browser
+   - Required for voice input to work
+   - Permission is saved for future visits
+
+**Voice Interaction Example:**
+```
+1. Enable Voice Mode toggle ✓
+2. Click 🎤 Voice button
+3. Speak: "How many articles did you fetch?"
+4. See question appear in text box
+5. Hear answer: "I fetched 5 articles."
+```
 
 #### Question Types:
 
@@ -166,7 +193,9 @@ A3: "2 article(s) mention 'python': Python ML Library Released; Python AI Tools"
 - 🌙 **Clean UI**: Modern, easy-to-read interface with purple gradient
 - 🔒 **Privacy-First**: No API keys needed, all free services
 - 🌐 **Offline Support**: Falls back to sample articles if network fails
-- 🎤 **Voice Output**: Browser-based text-to-speech for articles
+- 🎤 **Voice Input**: Ask questions using speech recognition (NEW!)
+- 🔊 **Voice Output**: Automatic text-to-speech for answers (NEW!)
+- 💬 **Conversational AI**: Talk to it like Copilot (NEW!)
 - ⚡ **Fast Loading**: Single HTML file with no external dependencies
 - 🔄 **Real-time News**: Fetches live articles from Hacker News
 
@@ -176,7 +205,8 @@ A3: "2 article(s) mention 'python': Python ML Library Released; Python AI Tools"
 - **Single Page Application (SPA)**: Everything in one HTML file
 - **No Backend Required**: Runs entirely in the browser
 - **News Source**: Hacker News Algolia API (free, no auth)
-- **Text-to-Speech**: Web Speech API (built into browsers)
+- **Speech Recognition**: Web Speech API for voice input (NEW!)
+- **Text-to-Speech**: Web Speech API for voice output (built into browsers)
 - **Session Management**: In-browser state management
 
 ### API Used:
@@ -188,6 +218,14 @@ A3: "2 article(s) mention 'python': Python ML Library Released; Python AI Tools"
 - Modern browser with JavaScript enabled
 - Support for ES6+ JavaScript features
 - Speech Synthesis API for audio features
+- Speech Recognition API for voice input (Chrome, Edge, Safari)
+
+### Voice Features:
+- **Speech Recognition**: Uses browser's built-in Web Speech API
+- **Text-to-Speech**: Automatic voice responses in voice mode
+- **Microphone Permission**: Required for voice input
+- **Best Experience**: Chrome or Edge for voice recognition
+- **Privacy**: All voice processing happens in your browser
 
 ## 🚀 Deployment Status
 
@@ -225,6 +263,30 @@ After merging to `main`:
 - Check if your browser supports Speech Synthesis
 - Ensure browser audio isn't muted
 - Try Chrome/Firefox if using older browser
+
+**Q: Voice button (🎤) not working?**
+- Grant microphone permission when prompted
+- Speech recognition works best in Chrome, Edge, and Safari
+- Firefox has limited support for speech recognition
+- Check browser console for permission errors
+- Try refreshing the page
+
+**Q: Microphone permission denied?**
+- Click the 🔒 or ⓘ icon in browser address bar
+- Allow microphone access for this site
+- Refresh the page after granting permission
+
+**Q: Voice mode not speaking answers?**
+- Enable the "Voice Mode" toggle switch first
+- Check that browser audio isn't muted
+- Ensure system volume is up
+- Try clicking the toggle off and on again
+
+**Q: Voice recognition hears wrong words?**
+- Speak clearly and at normal pace
+- Reduce background noise
+- Move closer to microphone
+- Try rephrasing your question
 
 **Q: No articles loading?**
 - Check internet connection

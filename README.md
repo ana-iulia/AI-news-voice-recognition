@@ -4,7 +4,13 @@ A Python application that fetches news articles and provides voice recognition a
 
 ## 🌐 Quick Access - Browser-Based Q&A
 
-**NEW!** Browser-based interface (no Python installation needed):
+**NEW!** Browser-based interface with **full voice interaction** (no Python installation needed):
+
+### 🎤 Voice Features (NEW!)
+- **Ask questions with your voice** - Click mic button and speak
+- **Hear answers spoken back** - Enable voice mode for automatic TTS
+- **Conversational AI** - Works just like talking to Copilot!
+- **No installation needed** - All in browser using Web Speech API
 
 ### 📱 Access Online (After Deployment)
 **Live URL**: https://ana-iulia.github.io/AI-news-voice-recognition/
@@ -25,11 +31,13 @@ xdg-open index.html          # Linux
 
 ✨ **Voice Recognition** - Search for news using your voice (no API key required)
 🔊 **Text-to-Speech** - Listen to news articles read aloud
+🎤 **Voice Q&A** - Ask questions with your voice and hear answers (NEW!)
+💬 **Conversational Mode** - Talk naturally like with Copilot (NEW!)
 📱 **Web Interface** - Mobile-friendly web UI with audio playback
 💻 **CLI Mode** - Command-line interface with interactive voice mode
 🔒 **Privacy-First** - All free libraries, no API keys required
 🌐 **Offline Support** - Falls back to offline samples when network unavailable
-🎯 **Browser Q&A** - Ask questions about fetched news articles (NEW!)
+🎯 **Browser Q&A** - Ask questions about fetched news articles
 
 ## Installation
 
