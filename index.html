@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>News Audio Q&A</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      width: 100%;
+      padding: 30px;
+    }
+    h1 {
+      color: #667eea;
+      font-size: 28px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    p {
+      color: #666;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .section {
+      margin-bottom: 25px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 5px;
+    }
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .input-group {
+      margin-bottom: 15px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+    }
+    button:hover {
+      background: #5568d3;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .button-secondary {
+      background: #764ba2;
+    }
+    .button-secondary:hover {
+      background: #653a8a;
+    }
+    .button-tertiary {
+      background: #48bb78;
+    }
+    .button-tertiary:hover {
+      background: #38a169;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .button-group button {
+      flex: 1;
+    }
+    .prompt {
+      background: #f7fafc;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #667eea;
+      margin-bottom: 15px;
+      font-size: 14px;
+      color: #333;
+    }
+    .answer {
+      background: #edf2f7;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #48bb78;
+      font-size: 14px;
+      color: #333;
+      min-height: 50px;
+    }
+    .articles {
+      list-style: decimal;
+      padding-left: 20px;
+      margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .articles li {
+      margin-bottom: 10px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.5;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+      h1 {
+        font-size: 24px;
+      }
+      .button-group {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>News Audio Q&amp;A (Phone)</h1>
+    <p>Enter topic and ask up to 3 questions about the fetched news articles.</p>
+
+    <div class="section">
+      <div class="section-title">Setup</div>
+      <div class="input-group">
+        <label for="topic">Topic:</label>
+        <input type="text" id="topic" placeholder="technology" />
+      </div>
+      <div class="input-group">
+        <label for="limit">Number of Articles (1-20):</label>
+        <input type="number" id="limit" min="1" max="20" value="5" />
+      </div>
+      <button id="start-btn">Start Session</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Articles</div>
+      <ol id="articles" class="articles"></ol>
+      <button id="read-btn" class="button-tertiary" disabled>Read All Aloud</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Question Prompt</div>
+      <div id="prompt" class="prompt">Click "Start Session" to begin.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Your Question</div>
+      <div class="input-group">
+        <input type="text" id="question" placeholder="e.g., how many articles?" />
+      </div>
+      <div class="button-group">
+        <button id="submit-btn" class="button-secondary" disabled>Submit</button>
+        <button id="next-btn" disabled>Next</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Answer</div>
+      <div id="answer" class="answer">Your answer will appear here.</div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const NEWS_API_URL = "https://hn.algolia.com/api/v1/search";
+      const DEFAULT_TOPIC = "technology";
+      const MIN_KEYWORD_LENGTH = 3;
+      const MAX_ARTICLES_LIMIT = 20;
+
+      const fallbackArticles = [
+        {
+          title: "Open-source AI tools continue to expand",
+          description: "Developers are adopting open-source AI stacks for rapid prototyping.",
+          source: "Offline sample",
+          url: ""
+        },
+        {
+          title: "Cybersecurity teams focus on supply-chain risks",
+          description: "Organizations increase dependency audits and automated checks.",
+          source: "Offline sample",
+          url: ""
+        },
+        {
+          title: "Cloud costs drive renewed optimization efforts",
+          description: "Engineering teams revisit right-sizing and workload scheduling.",
+          source: "Offline sample",
+          url: ""
+        }
+      ];
+
+      const topicInput = document.getElementById("topic");
+      const limitInput = document.getElementById("limit");
+      const startBtn = document.getElementById("start-btn");
+      const articlesEl = document.getElementById("articles");
+      const readBtn = document.getElementById("read-btn");
+      const promptEl = document.getElementById("prompt");
+      const questionInput = document.getElementById("question");
+      const submitBtn = document.getElementById("submit-btn");
+      const nextBtn = document.getElementById("next-btn");
+      const answerEl = document.getElementById("answer");
+
+      const state = {
+        articles: [],
+        articleTexts: [],
+        turn: 0,
+        rounds: 3
+      };
+
+      topicInput.value = DEFAULT_TOPIC;
+
+      function normalizeLimit(value) {
+        const parsed = Number(value);
+        if (isNaN(parsed) || parsed < 1) return 5;
+        return Math.max(1, Math.min(Math.trunc(parsed), MAX_ARTICLES_LIMIT));
+      }
+
+      function normalizeTopic(value) {
+        return String(value || "").trim() || DEFAULT_TOPIC;
+      }
+
+      function nextPrompt() {
+        const nextTurn = state.turn + 1;
+        if (nextTurn > state.rounds) return "Session completed.";
+        return `Question ${nextTurn}/${state.rounds}: ask about count, titles, sources, or whether a keyword appears.`;
+      }
+
+      function answerQuestion(question) {
+        const questionLower = question.toLowerCase();
+
+        if (questionLower.includes("how many") || questionLower.includes("count")) {
+          return `I fetched ${state.articles.length} articles.`;
+        }
+
+        if (questionLower.includes("titles") || questionLower.includes("list")) {
+          const joined = state.articles.map((article) => article.title).join("; ");
+          return `Here are the titles: ${joined}`;
+        }
+
+        if (questionLower.includes("source")) {
+          const uniqueSources = [...new Set(state.articles.map((article) => article.source))].sort();
+          return `Sources included: ${uniqueSources.join(", ")}`;
+        }
+
+        if (questionLower.includes("keyword") || questionLower.includes("about")) {
+          const words = questionLower
+            .split(/\s+/)
+            .map((word) => word.replace(/^[^\w]+|[^\w]+$/g, ""))
+            .filter((word) => word.length > MIN_KEYWORD_LENGTH);
+          if (!words.length) return "Please include a more specific keyword.";
+          const keyword = words.reduce((best, current) => current.length > best.length ? current : best, words[0]);
+          const matches = state.articles
+            .filter((article) => {
+              const titleLower = article.title.toLowerCase();
+              const descriptionLower = article.description.toLowerCase();
+              return titleLower.includes(keyword) || descriptionLower.includes(keyword);
+            })
+            .map((article) => article.title);
+          if (!matches.length) return `No article matched the keyword '${keyword}'.`;
+          return `${matches.length} article(s) mention '${keyword}': ${matches.join("; ")}`;
+        }
+
+        return "I can answer questions about article count, titles, sources, or whether a keyword appears in the fetched news.";
+      }
+
+      function fallbackFor(topic, limit) {
+        const topicLower = topic.toLowerCase();
+        const filtered = fallbackArticles.filter((article) => `${article.title} ${article.description}`.toLowerCase().includes(topicLower));
+        return (filtered.length ? filtered : fallbackArticles).slice(0, limit);
+      }
+
+      async function fetchArticles(topic, limit) {
+        const params = new URLSearchParams({
+          query: topic,
+          tags: "story",
+          hitsPerPage: String(limit)
+        });
+        try {
+          const response = await fetch(`${NEWS_API_URL}?${params.toString()}`);
+          if (!response.ok) throw new Error(`Request failed (${response.status})`);
+          const payload = await response.json();
+          if (!Array.isArray(payload.hits)) return fallbackFor(topic, limit);
+          const articles = payload.hits.map((item) => ({
+            title: String(item.title || "Untitled").trim() || "Untitled",
+            description: "No description available.",
+            source: "Hacker News",
+            url: String(item.url || item.story_url || "").trim()
+          }));
+          return articles.length ? articles : fallbackFor(topic, limit);
+        } catch {
+          return fallbackFor(topic, limit);
+        }
+      }
+
+      function renderArticles(articles) {
+        articlesEl.textContent = "";
+        state.articleTexts = [];
+        for (const article of articles) {
+          const item = document.createElement("li");
+          const text = `${article.title}. ${article.description}`;
+          item.textContent = text;
+          articlesEl.appendChild(item);
+          state.articleTexts.push(text);
+        }
+      }
+
+      function resetSession() {
+        state.turn = 0;
+        promptEl.textContent = nextPrompt();
+        questionInput.value = "";
+        submitBtn.disabled = false;
+        nextBtn.disabled = false;
+        readBtn.disabled = state.articleTexts.length === 0;
+      }
+
+      startBtn.addEventListener("click", async () => {
+        const topic = normalizeTopic(topicInput.value);
+        const limit = normalizeLimit(limitInput.value);
+        topicInput.value = topic;
+        limitInput.value = String(limit);
+        answerEl.textContent = "Loading headlines...";
+        startBtn.disabled = true;
+        try {
+          const articles = await fetchArticles(topic, limit);
+          state.articles = articles;
+          renderArticles(articles);
+          resetSession();
+          answerEl.textContent = "Session started.";
+        } finally {
+          startBtn.disabled = false;
+        }
+      });
+
+      submitBtn.addEventListener("click", () => {
+        if (!state.articles.length) {
+          answerEl.textContent = "Start a session first.";
+          return;
+        }
+        const question = questionInput.value.trim();
+        if (!question) {
+          answerEl.textContent = "Please type a question first.";
+          return;
+        }
+        if (state.turn >= state.rounds) {
+          answerEl.textContent = "Session is complete.";
+          submitBtn.disabled = true;
+          promptEl.textContent = "Session completed.";
+          return;
+        }
+        answerEl.textContent = answerQuestion(question);
+        state.turn += 1;
+        promptEl.textContent = nextPrompt();
+        if (state.turn >= state.rounds) {
+          submitBtn.disabled = true;
+        }
+      });
+
+      nextBtn.addEventListener("click", () => {
+        if (!state.articles.length) {
+          answerEl.textContent = "Start a session first.";
+          return;
+        }
+        promptEl.textContent = nextPrompt();
+      });
+
+      readBtn.addEventListener("click", () => {
+        if (!("speechSynthesis" in window)) {
+          answerEl.textContent = "This browser does not support speech synthesis.";
+          return;
+        }
+        if (!state.articleTexts.length) {
+          answerEl.textContent = "No articles available to read.";
+          return;
+        }
+        window.speechSynthesis.cancel();
+        for (const text of state.articleTexts) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          window.speechSynthesis.speak(utterance);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
