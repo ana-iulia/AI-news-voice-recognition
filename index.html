@@ -431,12 +431,14 @@
         
         // Choose a voice (prefer female voice if available)
         const voices = window.speechSynthesis.getVoices();
-        const preferredVoice = voices.find(voice => 
-          voice.lang.startsWith('en') && voice.name.includes('Female')
-        ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
-        
-        if (preferredVoice) {
-          utterance.voice = preferredVoice;
+        if (voices.length > 0) {
+          const preferredVoice = voices.find(voice => 
+            voice.lang.startsWith('en') && voice.name.includes('Female')
+          ) || voices.find(voice => voice.lang.startsWith('en')) || voices[0];
+          
+          if (preferredVoice) {
+            utterance.voice = preferredVoice;
+          }
         }
         
         window.speechSynthesis.speak(utterance);
